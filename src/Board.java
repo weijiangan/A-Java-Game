@@ -1,6 +1,10 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Random;
+import java.util.Vector;
 
 /**
  * Created by weijiangan on 28/11/2016.
@@ -15,15 +19,22 @@ public class Board extends JPanel implements ComponentListener {
     private int MOON_Y = (int) (0.12 * frameWidth);
     private int PLAYER_X = (int) (0.15 * frameWidth);
     private int PLAYER_Y;
+    private final int SPAWN_INTERVAL = 32;
+    private int i = 0;
+    private Random random;
     private Terrain cloud, ground, ground2, water, water2, mountain;
     private Player player;
-    private Timer timer;
+    private Vector<Enemy> enemies;
+    private Iterator<Enemy> iter;
+    Timer timer;
 
     public Board(int width, int height) {
         this.frameWidth = width;
         this.frameHeight = height;
+        enemies = new Vector<>();
         addComponentListener(this);
         setDoubleBuffered(true);
+        random = new Random();
         cloud = new Terrain(-2, "resources/Tiles/Cloud_1.png");
         cloud.scaleSprite(0.2f);
         ground = new Terrain(-5, "resources/Tiles/grassMid.png");
@@ -44,7 +55,22 @@ public class Board extends JPanel implements ComponentListener {
                 mountain.nextPos();
                 player.nextFrame();
                 player.updatePos();
+                if (i == SPAWN_INTERVAL) {
+                    spawnEnemies();
+                    i = -1;
+                }
+                iter = enemies.iterator();
+                while (iter.hasNext()) {
+                    Enemy tmp = iter.next();
+                    if (tmp.getX() < 500) {
+                        enemies.remove(tmp);
+                        break;
+                    }
+                    tmp.nextFrame();
+                    tmp.updatePos();
+                }
                 repaint();
+                i++;
             }
         });
         timer.start();
@@ -62,6 +88,12 @@ public class Board extends JPanel implements ComponentListener {
         drawWater(g);
 
         g.drawImage(player.getSprite(), player.getX(), player.getY(), this);
+
+        iter = enemies.iterator();
+        while (iter.hasNext()) {
+            Enemy tmp = iter.next();
+            g.drawImage(tmp.getSprite(), tmp.getX(), tmp.getY(), null);
+        }
     }
 
     private void drawSky(Graphics g) {
@@ -112,6 +144,7 @@ public class Board extends JPanel implements ComponentListener {
 
     @Override
     public void componentResized(ComponentEvent e) {
+        timer.stop();
         frameHeight = getHeight();
         frameWidth = getWidth();
         LAND_HEIGHT = (int) (0.85 * frameHeight);
@@ -124,6 +157,12 @@ public class Board extends JPanel implements ComponentListener {
         player.setLAND_Y(PLAYER_Y);
         MOON_X = (int) (0.8 * frameWidth);
         MOON_Y = (int) (0.08 * frameHeight);
+        iter = enemies.iterator();
+        while (iter.hasNext()) {
+            Enemy tmp = iter.next();
+            tmp.setY(frameHeight - 81 + 5);
+        }
+        timer.start();
     }
 
     @Override
@@ -163,5 +202,19 @@ public class Board extends JPanel implements ComponentListener {
             else
                 timer.start();
         }
+    }
+
+    private void spawnEnemies() {
+        if (enemies.size() < 5) {
+            if (genEnemyChance() > 8) {
+                Enemy enemy = new Enemy(frameWidth + 150, LAND_HEIGHT - 81 + 5);
+                enemies.add(enemy);
+            }
+        }
+    }
+
+    private int genEnemyChance() {
+        int temp = random.nextInt(10) + 1;
+        return temp;
     }
 }

@@ -28,10 +28,12 @@ public class Game implements ActionListener, KeyListener {
             @Override
             public void windowClosing(WindowEvent e) {
                 super.windowClosing(e);
+                board.timer.stop();
                 if (JOptionPane.showConfirmDialog(null, "Are you sure you want to exit game?", "Notice",
                         JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                     System.exit(0);
                 }
+                board.timer.start();
             }
         });
         f.setAlwaysOnTop(false);

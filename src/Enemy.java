@@ -8,13 +8,15 @@ public class Enemy {
     private final int FRAMES = 2;
     private int x, y;
     private int curFrame;
+    private int speed;
     private Image sprite[] = new Image[FRAMES];
 
     public Enemy(int x, int y) {
         this.x = x;
         this.y = y;
+        this.speed = -7;
         for (int i = 0; i < FRAMES; i++) {
-            sprite[i] = new ImageIcon(this.getClass().getResource("resources/Enemies/snailWalk" + i+1 + ".png")).getImage();
+            sprite[i] = new ImageIcon(this.getClass().getResource("resources/Enemies/snailWalk" + (i+1) + ".png")).getImage();
         }
         curFrame = 0;
     }
@@ -37,6 +39,10 @@ public class Enemy {
 
     public Image getSprite() {
         return sprite[curFrame];
+    }
+
+    public void updatePos() {
+        x += speed;
     }
 
     public void nextFrame() {
