@@ -99,8 +99,6 @@ public class TopClass implements ActionListener, KeyListener {
 		
 		//Start Game JButton
 		startGame = new JButton("Start Playing!");
-		startGame.setBackground(Color.BLUE);
-		startGame.setForeground(Color.WHITE);
 		startGame.setFocusable(false); //rather than just setFocusabled(false)
 		startGame.setFont(new Font("Calibri", Font.BOLD, 42));
 		startGame.setAlignmentX(0.5f); //center horizontally on-screen
@@ -270,14 +268,14 @@ public class TopClass implements ActionListener, KeyListener {
 				xLoc1 -= X_MOVEMENT_DIFFERENCE;
 				xLoc2 -= X_MOVEMENT_DIFFERENCE;
 
-				// space bar is fired while bird is airborne
+				// space bar is fired and bird is asked to move
 				if(birdFired && !isSplash) {
 					birdYTracker = birdY;
 					birdFired = false;
 				}
 				
 				if(birdThrust && !isSplash) {
-					// space bar is pressed to make the bird jump
+					// space bar is pressed bird is still moving
 					if(birdYTracker - birdY - BIRD_JUMP_DIFF < BIRD_JUMP_HEIGHT) {
 						if(birdY - BIRD_JUMP_DIFF > 0) {
 							birdY -= BIRD_JUMP_DIFF; //coordinates different
