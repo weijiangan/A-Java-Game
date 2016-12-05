@@ -1,10 +1,7 @@
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
@@ -16,8 +13,8 @@ public class Board extends JPanel implements ComponentListener {
     private final int SPAWN_INTERVAL = 40;
     private final int INVULN_DUR = 20;
     Timer timer;
+    private boolean PLAYGAME;
     private int frameWidth, frameHeight;
-    private boolean isSplash;
     private int LAND_HEIGHT = (int) (0.8 * frameHeight);
     private int WATER_HEIGHT = (int) (0.95 * frameHeight);
     private int MOUNTAIN_HEIGHT = (int) (0.82 * frameWidth);
@@ -25,7 +22,12 @@ public class Board extends JPanel implements ComponentListener {
     private int MOON_Y = (int) (0.12 * frameWidth);
     private int PLAYER_X = (int) (0.15 * frameWidth);
     private int PLAYER_Y;
+    private int SNAIL_SPEED;
+    private int NUM_OF_SNAILS;
     private int i = 0;
+    private int score;
+    private int scoreWidth;
+    private Font scoreFont;
     private Random random;
     private Terrain cloud, ground, ground2, water, water2, mountain;
     private Player player;
@@ -33,9 +35,15 @@ public class Board extends JPanel implements ComponentListener {
     private Iterator<Enemy> iter;
 
     public Board(int width, int height) {
+        PLAYGAME = true;
         setLayout(null);
         this.frameWidth = width;
         this.frameHeight = height;
+        scoreFont = new Font("Calibri", Font.BOLD, 56);
+        score = 0;
+        scoreWidth = 0;
+        SNAIL_SPEED = -7;
+        NUM_OF_SNAILS = 5;
         enemies = new ArrayList<>();
         addComponentListener(this);
         setDoubleBuffered(true);
@@ -52,29 +60,32 @@ public class Board extends JPanel implements ComponentListener {
         timer = new Timer(25, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                cloud.nextPos();
-                ground.nextPos();
-                ground2.nextPos();
-                water.nextPos();
-                water2.nextPos();
-                mountain.nextPos();
-                player.nextFrame();
-                player.updatePos();
-                if (i == SPAWN_INTERVAL) {
-                    spawnEnemies();
-                    i = -1;
-                }
-                iter = enemies.iterator();
-                while (iter.hasNext()) {
-                    Enemy tmp = iter.next();
-                    if (tmp.getX() < -150) {
-                        enemies.remove(tmp);
-                        break;
+                if (PLAYGAME) {
+                    cloud.nextPos();
+                    ground.nextPos();
+                    ground2.nextPos();
+                    water.nextPos();
+                    water2.nextPos();
+                    mountain.nextPos();
+                    player.nextFrame();
+                    player.updatePos();
+                    if (i == SPAWN_INTERVAL) {
+                        spawnEnemies();
+                        score++;
+                        i = -1;
                     }
-                    tmp.nextFrame();
-                    tmp.updatePos();
+                    iter = enemies.iterator();
+                    while (iter.hasNext()) {
+                        Enemy tmp = iter.next();
+                        if (tmp.getX() < -150) {
+                            enemies.remove(tmp);
+                            break;
+                        }
+                        tmp.nextFrame();
+                        tmp.updatePos();
+                    }
+                    player.checkInvulnerability();
                 }
-                player.checkInvulnerability();
                 checkCollisions();
                 repaint();
                 i++;
@@ -87,15 +98,17 @@ public class Board extends JPanel implements ComponentListener {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        drawSky(g);
-        drawMoon(g);
-        drawCloud(g);
-        drawMountain(g);
-        drawLand(g);
-        drawWater(g);
-        drawPlayer(g);
-        drawEnemies(g);
-        drawHUD(g);
+        if (PLAYGAME) {
+            drawSky(g);
+            drawMoon(g);
+            drawCloud(g);
+            drawMountain(g);
+            drawLand(g);
+            drawWater(g);
+            drawPlayer(g);
+            drawEnemies(g);
+            drawHUD(g);
+        }
     }
 
     private void drawSky(Graphics g) {
@@ -158,13 +171,23 @@ public class Board extends JPanel implements ComponentListener {
     }
 
     private void drawHUD(Graphics g) {
+        g.setColor(Color.WHITE);
+        g.setFont(scoreFont);
+        FontMetrics metric = g.getFontMetrics(scoreFont);
+        scoreWidth = metric.stringWidth(String.format("%d", score));
+        g.drawString(String.format("%d", score), frameWidth/2 - scoreWidth/2, 75);
         Image heart = new ImageIcon(this.getClass().getResource("resources/HUD/hud_heartFull.png")).getImage();
-        Image cross = new ImageIcon(this.getClass().getResource("resources/HUD/hud_x.png")).getImage();
+        //Image cross = new ImageIcon(this.getClass().getResource("resources/HUD/hud_x.png")).getImage();
 
-        for (int i= 0, x = 25; i < player.getLives(); i++, x += 50) {
+        int curLives = player.getLives();
+        for (int i= 0, x = 25; i < curLives; i++, x += 50) {
             g.drawImage(heart, x, 25, null);
         }
-        g.drawImage(cross, frameWidth - 75, 40, null);
+        if (curLives == 0) {
+            PLAYGAME = false;
+            timer.stop();
+        }
+        //g.drawImage(cross, frameWidth - 75, 25, null);
     }
 
     @Override
@@ -204,7 +227,10 @@ public class Board extends JPanel implements ComponentListener {
         int key = e.getKeyCode();
 
         if (key == KeyEvent.VK_SPACE) {
-            player.jump(true);
+            if (PLAYGAME)
+                player.jump(true);
+            else
+                restartGame();
         } else if (key == KeyEvent.VK_LEFT) {
             player.setDx(-9);
         } else if (key == KeyEvent.VK_RIGHT) {
@@ -221,18 +247,13 @@ public class Board extends JPanel implements ComponentListener {
             player.setDx(0);
         } else if (key == KeyEvent.VK_RIGHT) {
             player.setDx(0);
-        } else if (key == KeyEvent.VK_ESCAPE) {
-            if (timer.isRunning())
-                timer.stop();
-            else
-                timer.start();
         }
     }
 
     private void spawnEnemies() {
-        if (enemies.size() < 5) {
+        if (enemies.size() < NUM_OF_SNAILS) {
             if (genEnemyChance() > 7) {
-                Enemy enemy = new Enemy(frameWidth + 150, LAND_HEIGHT - 81 + 5);
+                Enemy enemy = new Enemy(frameWidth + 150, LAND_HEIGHT - 81 + 5, SNAIL_SPEED);
                 enemies.add(enemy);
             }
         }
@@ -269,5 +290,14 @@ public class Board extends JPanel implements ComponentListener {
                 }
             }
         }
+    }
+
+    public void restartGame() {
+        player.setX((int) (0.15 * frameWidth));
+        player.setLives(3);
+        enemies.clear();
+        score = 0;
+        PLAYGAME = true;
+        timer.start();
     }
 }

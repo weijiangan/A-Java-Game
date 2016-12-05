@@ -76,6 +76,10 @@ public class Player {
         return lives;
     }
 
+    public void setLives(int n) {
+        lives = n;
+    }
+
     public void changeLives(int n) {
         if (!GODMODE)
             lives += (n);

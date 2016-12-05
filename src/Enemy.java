@@ -12,10 +12,10 @@ public class Enemy {
     private int speed;
     private Image sprite[] = new Image[FRAMES];
 
-    public Enemy(int x, int y) {
+    public Enemy(int x, int y, int speed) {
         this.x = x;
         this.y = y;
-        this.speed = -7;
+        this.speed = speed;
         for (int i = 0; i < FRAMES; i++) {
             sprite[i] = new ImageIcon(this.getClass().getResource("resources/Enemies/snailWalk" + (i+1) + ".png")).getImage();
         }
