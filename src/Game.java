@@ -1,6 +1,9 @@
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 
 /**
  * Created by weijiangan on 28/11/2016.
@@ -12,12 +15,21 @@ public class Game implements ActionListener, KeyListener {
     private JPanel topPanel;
     private JButton startGame;
     private Board board;
+    private Clip clip;
 
     private Game() {
         initGame();
     }
 
     private void initGame() {
+        try {
+            clip = AudioSystem.getClip();
+            clip.open(AudioSystem.getAudioInputStream(new File(getClass().getResource("resources/bgm.wav").getPath())));
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Exception occurred: " + e, "Error", JOptionPane.ERROR_MESSAGE);
+        }
+        clip.loop(Clip.LOOP_CONTINUOUSLY);
+        clip.start();
         f = new JFrame("A Java Game");
         f.setMinimumSize(new Dimension(SCREEN_WIDTH / 4, SCREEN_HEIGHT / 4));
         f.setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -54,7 +66,7 @@ public class Game implements ActionListener, KeyListener {
         startGame.setAlignmentX(0.5f); // center horizontally on-screen
         startGame.setAlignmentY(0.5f); // center vertically on-screen
         startGame.addActionListener(this);
-        //topPanel.add(startGame);
+        topPanel.add(startGame);
 
         // Must add last to ensure button's visibility
         board = new Board(SCREEN_WIDTH, SCREEN_HEIGHT);

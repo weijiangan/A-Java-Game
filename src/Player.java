@@ -1,18 +1,22 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 /**
  * Created by weijiangan on 02/12/2016.
  */
 
 public class Player {
+    private final int FRAMES = 11;
     private int x, y;
     private int dx;
     private int velocity;
     private int curFrame;
-    private final int FRAMES = 11;
+    private int lives;
+    private int invulnDur;
     private boolean JUMPING;
     private boolean PEAKED;
+    private boolean GODMODE;
     private int LAND_Y;
     private Image[] sprite = new Image[FRAMES];
     private Image jumpSprite;
@@ -22,6 +26,7 @@ public class Player {
     }
 
     public Player(int x, int y) {
+        lives = 3;
         this.x = x;
         this.y = y;
         for (int i = 0; i < FRAMES; i++) {
@@ -30,6 +35,8 @@ public class Player {
         jumpSprite = new ImageIcon(this.getClass().getResource("resources/Player/p3_jump.png")).getImage();
         this.curFrame = 0;
         JUMPING = false;
+        GODMODE = false;
+        invulnDur = 0;
         velocity = 40;
     }
 
@@ -65,6 +72,15 @@ public class Player {
         }
     }
 
+    public int getLives() {
+        return lives;
+    }
+
+    public void changeLives(int n) {
+        if (!GODMODE)
+            lives += (n);
+    }
+
     public void updatePos() {
         x += dx;
         if (JUMPING && !PEAKED) {
@@ -91,6 +107,22 @@ public class Player {
         }
     }
 
+    public void checkInvulnerability() {
+        if (invulnDur > 0)
+            invulnDur --;
+        else if (invulnDur == 0)
+            GODMODE = false;
+    }
+
+    public int getInvulnDur() {
+        return invulnDur;
+    }
+
+    public void setInvulnDur(int n) {
+        GODMODE = true;
+        invulnDur = n;
+    }
+
     public void jump(boolean b) {
         if (b) {
             if (!JUMPING && !PEAKED)
@@ -104,5 +136,17 @@ public class Player {
             curFrame = 0;
         else
             curFrame++;
+    }
+
+    public Rectangle getBounds() {
+        return (new Rectangle(x, y, sprite[curFrame].getWidth(null), sprite[curFrame].getHeight(null)));
+    }
+
+    public BufferedImage getBI() {
+        BufferedImage bi = new BufferedImage(sprite[curFrame].getWidth(null), sprite[curFrame].getHeight(null), BufferedImage.TYPE_INT_ARGB);
+        Graphics g = bi.getGraphics();
+        g.drawImage(sprite[curFrame], 0, 0, null);
+        g.dispose();
+        return bi;
     }
 }

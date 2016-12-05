@@ -1,15 +1,21 @@
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Random;
-import java.util.Vector;
 
 /**
  * Created by weijiangan on 28/11/2016.
  */
 public class Board extends JPanel implements ComponentListener {
+    private final int SPAWN_INTERVAL = 40;
+    private final int INVULN_DUR = 20;
+    Timer timer;
     private int frameWidth, frameHeight;
     private boolean isSplash;
     private int LAND_HEIGHT = (int) (0.8 * frameHeight);
@@ -19,19 +25,18 @@ public class Board extends JPanel implements ComponentListener {
     private int MOON_Y = (int) (0.12 * frameWidth);
     private int PLAYER_X = (int) (0.15 * frameWidth);
     private int PLAYER_Y;
-    private final int SPAWN_INTERVAL = 32;
     private int i = 0;
     private Random random;
     private Terrain cloud, ground, ground2, water, water2, mountain;
     private Player player;
-    private Vector<Enemy> enemies;
+    private ArrayList<Enemy> enemies;
     private Iterator<Enemy> iter;
-    Timer timer;
 
     public Board(int width, int height) {
+        setLayout(null);
         this.frameWidth = width;
         this.frameHeight = height;
-        enemies = new Vector<>();
+        enemies = new ArrayList<>();
         addComponentListener(this);
         setDoubleBuffered(true);
         random = new Random();
@@ -62,13 +67,15 @@ public class Board extends JPanel implements ComponentListener {
                 iter = enemies.iterator();
                 while (iter.hasNext()) {
                     Enemy tmp = iter.next();
-                    if (tmp.getX() < 500) {
+                    if (tmp.getX() < -150) {
                         enemies.remove(tmp);
                         break;
                     }
                     tmp.nextFrame();
                     tmp.updatePos();
                 }
+                player.checkInvulnerability();
+                checkCollisions();
                 repaint();
                 i++;
             }
@@ -86,14 +93,9 @@ public class Board extends JPanel implements ComponentListener {
         drawMountain(g);
         drawLand(g);
         drawWater(g);
-
-        g.drawImage(player.getSprite(), player.getX(), player.getY(), this);
-
-        iter = enemies.iterator();
-        while (iter.hasNext()) {
-            Enemy tmp = iter.next();
-            g.drawImage(tmp.getSprite(), tmp.getX(), tmp.getY(), null);
-        }
+        drawPlayer(g);
+        drawEnemies(g);
+        drawHUD(g);
     }
 
     private void drawSky(Graphics g) {
@@ -142,6 +144,29 @@ public class Board extends JPanel implements ComponentListener {
         }
     }
 
+    private void drawPlayer(Graphics g) {
+        if (player.getInvulnDur() % 2 == 0)
+            g.drawImage(player.getSprite(), player.getX(), player.getY(), this);
+    }
+
+    private void drawEnemies(Graphics g) {
+        iter = enemies.iterator();
+        while (iter.hasNext()) {
+            Enemy tmp = iter.next();
+            g.drawImage(tmp.getSprite(), tmp.getX(), tmp.getY(), null);
+        }
+    }
+
+    private void drawHUD(Graphics g) {
+        Image heart = new ImageIcon(this.getClass().getResource("resources/HUD/hud_heartFull.png")).getImage();
+        Image cross = new ImageIcon(this.getClass().getResource("resources/HUD/hud_x.png")).getImage();
+
+        for (int i= 0, x = 25; i < player.getLives(); i++, x += 50) {
+            g.drawImage(heart, x, 25, null);
+        }
+        g.drawImage(cross, frameWidth - 75, 40, null);
+    }
+
     @Override
     public void componentResized(ComponentEvent e) {
         timer.stop();
@@ -160,7 +185,7 @@ public class Board extends JPanel implements ComponentListener {
         iter = enemies.iterator();
         while (iter.hasNext()) {
             Enemy tmp = iter.next();
-            tmp.setY(frameHeight - 81 + 5);
+            tmp.setY(LAND_HEIGHT - 81 + 5);
         }
         timer.start();
     }
@@ -206,7 +231,7 @@ public class Board extends JPanel implements ComponentListener {
 
     private void spawnEnemies() {
         if (enemies.size() < 5) {
-            if (genEnemyChance() > 8) {
+            if (genEnemyChance() > 7) {
                 Enemy enemy = new Enemy(frameWidth + 150, LAND_HEIGHT - 81 + 5);
                 enemies.add(enemy);
             }
@@ -214,7 +239,35 @@ public class Board extends JPanel implements ComponentListener {
     }
 
     private int genEnemyChance() {
-        int temp = random.nextInt(10) + 1;
-        return temp;
+        return random.nextInt(10) + 1;
+    }
+
+    public void checkCollisions() {
+        iter = enemies.iterator();
+        while (iter.hasNext()) {
+            Enemy tmp = iter.next();
+            collisionHelper(player.getBounds(), tmp.getBounds(), player.getBI(), tmp.getBI());
+        }
+    }
+
+    private void collisionHelper(Rectangle r1, Rectangle r2, BufferedImage b1, BufferedImage b2) {
+        if(r1.intersects(r2)) {
+            Rectangle r = r1.intersection(r2);
+
+            int firstI = (int) (r.getMinX() - r1.getMinX()); //firstI is the first x-pixel to iterate from
+            int firstJ = (int) (r.getMinY() - r1.getMinY()); //firstJ is the first y-pixel to iterate from
+            int bp1XHelper = (int) (r1.getMinX() - r2.getMinX()); //helper variables to use when referring to collision object
+            int bp1YHelper = (int) (r1.getMinY() - r2.getMinY());
+
+            for(int i = firstI; i < r.getWidth() + firstI; i++) { //
+                for(int j = firstJ; j < r.getHeight() + firstJ; j++) {
+                    if((b1.getRGB(i, j) & 0xFF000000) != 0x00 && (b2.getRGB(i + bp1XHelper, j + bp1YHelper) & 0xFF000000) != 0x00) {
+                        player.changeLives(-1);
+                        player.setInvulnDur(INVULN_DUR);
+                        break;
+                    }
+                }
+            }
+        }
     }
 }
