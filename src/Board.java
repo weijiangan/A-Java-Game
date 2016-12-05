@@ -35,7 +35,7 @@ public class Board extends JPanel implements ComponentListener {
     private ArrayList<Enemy> enemies;
     private Iterator<Enemy> iter;
 
-    public Board(int width, int height) {
+    public Board(int width, int height) throws Exception {
         PLAYGAME = true;
         setLayout(null);
         this.frameWidth = width;
@@ -242,7 +242,7 @@ public class Board extends JPanel implements ComponentListener {
     public void componentHidden(ComponentEvent e) {}
 
 
-    public void keyPressed(KeyEvent e) {
+    public void keyPressed(KeyEvent e) throws Exception {
         int key = e.getKeyCode();
 
         if (key == KeyEvent.VK_SPACE) {
@@ -257,7 +257,7 @@ public class Board extends JPanel implements ComponentListener {
         }
     }
 
-    public void keyReleased(KeyEvent e) {
+    public void keyReleased(KeyEvent e) throws Exception {
         int key = e.getKeyCode();
 
         if (key == KeyEvent.VK_SPACE) {

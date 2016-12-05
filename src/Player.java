@@ -1,6 +1,11 @@
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Created by weijiangan on 02/12/2016.
@@ -20,12 +25,13 @@ public class Player {
     private int LAND_Y;
     private Image[] sprite = new Image[FRAMES];
     private Image jumpSprite;
+    private Clip clip;
 
-    public Player() {
+    public Player() throws Exception {
         this(0, 0);
     }
 
-    public Player(int x, int y) {
+    public Player(int x, int y) throws Exception {
         lives = 3;
         this.x = x;
         this.y = y;
@@ -33,6 +39,8 @@ public class Player {
             sprite[i] = new ImageIcon(this.getClass().getResource("resources/Player/p3_walk/PNG/p3_walk" + String.format("%02d", i+1) + ".png")).getImage();
         }
         jumpSprite = new ImageIcon(this.getClass().getResource("resources/Player/p3_jump.png")).getImage();
+        clip = AudioSystem.getClip();
+        clip.open(AudioSystem.getAudioInputStream(new File(getClass().getResource("resources/Jump.wav").getPath())));
         this.curFrame = 0;
         JUMPING = false;
         GODMODE = false;
@@ -88,6 +96,7 @@ public class Player {
     public void updatePos() {
         x += dx;
         if (JUMPING && !PEAKED) {
+
             if (velocity > 0) {
                 y -= velocity;
                 velocity *= 0.8;
@@ -127,12 +136,16 @@ public class Player {
         invulnDur = n;
     }
 
-    public void jump(boolean b) {
+    public void jump(boolean b) throws Exception {
         if (b) {
             if (!JUMPING && !PEAKED)
                 LAND_Y = y;
+
             JUMPING = true;
-        } else JUMPING = false;
+            clip.start();
+            clip.setMicrosecondPosition(0);
+        }
+        else JUMPING = false;
     }
 
     public void nextFrame() {

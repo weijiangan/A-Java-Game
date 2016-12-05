@@ -127,7 +127,11 @@ public class Game implements ActionListener, KeyListener {
     @Override
     public void keyPressed(KeyEvent e) {
         if (INGAME)
-            board.keyPressed(e);
+            try {
+                board.keyPressed(e);
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
     }
     @Override
     public void keyReleased(KeyEvent e) {
@@ -142,12 +146,20 @@ public class Game implements ActionListener, KeyListener {
                 pauseButton.setVisible(false);
             }
         } else if (INGAME) {
-            board.keyReleased(e);
+            try {
+                board.keyReleased(e);
+            } catch (Exception e1) {
+                e1.printStackTrace();
+            }
         } else if (!INGAME) {
             story.keyReleased(e);
             if (e.getKeyCode() == KeyEvent.VK_SPACE) {
                 topPanel.remove(story);
-                board = new Board(SCREEN_WIDTH, SCREEN_HEIGHT);
+                try {
+                    board = new Board(SCREEN_WIDTH, SCREEN_HEIGHT);
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
                 topPanel.add(board);
                 topPanel.revalidate();
                 INGAME = true;
