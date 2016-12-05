@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Created by weijiangan on 28/11/2016.
@@ -11,18 +12,22 @@ import java.io.File;
 public class Game implements ActionListener, KeyListener {
     private static final int SCREEN_WIDTH = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
     private static final int SCREEN_HEIGHT = (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight();
+    private int buttonWIDTH = 273, buttonHEIGHT = 108;
     private static JFrame f;
     private JPanel topPanel;
     private JButton pauseButton;
+    private JButton startGame;
     private Board board;
+    private Menu menu;
+    private Story story;
     private Timer timer;
     private Clip clip;
 
-    private Game() {
+    private Game() throws IOException {
         initGame();
     }
 
-    private void initGame() {
+    private void initGame() throws IOException {
         try {
             clip = AudioSystem.getClip();
             clip.open(AudioSystem.getAudioInputStream(new File(getClass().getResource("resources/bgm.wav").getPath())));
@@ -60,14 +65,26 @@ public class Game implements ActionListener, KeyListener {
         });
     }
 
-    private JPanel createContentPane() {
+    private JPanel createContentPane() throws IOException {
         topPanel = new JPanel();    // topmost JPanel in layout hierarchy
         topPanel.setBackground(Color.BLACK);
+        topPanel.addKeyListener(this);
         // Allow us to layer the panels
         LayoutManager overlay = new OverlayLayout(topPanel);
         topPanel.setLayout(overlay);
 
-        // Start Game JButton
+        //start button
+        startGame = new JButton("Start Game");
+        startGame.setOpaque(false);
+        startGame.setPreferredSize(new Dimension(buttonWIDTH, buttonHEIGHT));
+        startGame.setContentAreaFilled(false);
+        startGame.setBorderPainted(false);
+        startGame.setFocusable(false); // rather than just setFocusable(false)
+        startGame.setAlignmentX(0.5f); // center horizontally on-screen
+        startGame.setAlignmentY(0.5f); // center vertically on-screen
+        startGame.addActionListener(this);
+
+        //pause button
         pauseButton = new JButton("Resume Playing");
         pauseButton.setFocusable(false); // rather than just setFocusable(false)
         pauseButton.setFont(new Font("Calibri", Font.BOLD, 42));
@@ -78,14 +95,21 @@ public class Game implements ActionListener, KeyListener {
 
         // Must add last to ensure button's visibility
         board = new Board(SCREEN_WIDTH, SCREEN_HEIGHT);
-        topPanel.add(board);
+        menu = new Menu (true);
+        story = new Story();
+
+        topPanel.add(startGame);
+        topPanel.add(menu);
 
         return topPanel;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-
+        topPanel.remove(startGame);
+        topPanel.remove(menu);
+        topPanel.add(story);
+        topPanel.revalidate();
     }
 
     @Override
@@ -103,6 +127,18 @@ public class Game implements ActionListener, KeyListener {
                 board.timer.start();
         } else {
             board.keyReleased(e);
+            int keyCode = e.getKeyCode();
+
+            board.keyReleased(e);
+            story.keyReleased(e);
+
+            switch (keyCode) {
+                case KeyEvent.VK_SPACE:
+                    topPanel.remove(story);
+                    topPanel.add(board);
+                    topPanel.revalidate();
+                    break;
+            }
         }
     }
 
@@ -110,7 +146,11 @@ public class Game implements ActionListener, KeyListener {
         EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                Game game = new Game();
+                try {
+                    Game game = new Game();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 f.setVisible(true);
             }
         });
