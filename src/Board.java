@@ -28,6 +28,7 @@ public class Board extends JPanel implements ComponentListener {
     private int score;
     private int scoreWidth;
     private Font scoreFont;
+    private FontMetrics metric;
     private Random random;
     private Terrain cloud, ground, ground2, water, water2, mountain;
     private Player player;
@@ -108,6 +109,23 @@ public class Board extends JPanel implements ComponentListener {
             drawPlayer(g);
             drawEnemies(g);
             drawHUD(g);
+        } else {
+            g.setColor(Color.BLACK);
+            g.fillRect(0, 0, frameWidth, frameHeight);
+            Image gameOver = new ImageIcon(this.getClass().getResource("resources/Menu/gameOver.png")).getImage();
+            g.drawImage(gameOver, (frameWidth / 2) - (gameOver.getWidth(null) / 2), (frameHeight / 2) - (gameOver.getHeight(null) / 2), null);
+            Font largeScoreFont = new Font("Calibri", Font.BOLD, 100);
+            metric = g.getFontMetrics(scoreFont);
+            FontMetrics metric2 = g.getFontMetrics(scoreFont);
+            scoreWidth = metric2.stringWidth(String.format("%d", score));
+            String message1 = "You failed to escape the snails!";
+            String message2 = "Press space to restart";
+            g.setColor(Color.WHITE);
+            g.setFont(largeScoreFont);
+            g.drawString(String.format("%d", score), frameWidth/2-scoreWidth, 200);
+            g.setFont(scoreFont);
+            g.drawString(message1, frameWidth/2-metric.stringWidth(message1)/2, 100);
+            g.drawString(message2, frameWidth/2-metric.stringWidth(message2)/2, frameHeight - 100);
         }
     }
 
@@ -173,7 +191,7 @@ public class Board extends JPanel implements ComponentListener {
     private void drawHUD(Graphics g) {
         g.setColor(Color.WHITE);
         g.setFont(scoreFont);
-        FontMetrics metric = g.getFontMetrics(scoreFont);
+        metric = g.getFontMetrics(scoreFont);
         scoreWidth = metric.stringWidth(String.format("%d", score));
         g.drawString(String.format("%d", score), frameWidth/2 - scoreWidth/2, 75);
         Image heart = new ImageIcon(this.getClass().getResource("resources/HUD/hud_heartFull.png")).getImage();
@@ -186,6 +204,7 @@ public class Board extends JPanel implements ComponentListener {
         if (curLives == 0) {
             PLAYGAME = false;
             timer.stop();
+            repaint();
         }
         //g.drawImage(cross, frameWidth - 75, 25, null);
     }

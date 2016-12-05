@@ -13,6 +13,7 @@ public class Game implements ActionListener, KeyListener {
     private static final int SCREEN_WIDTH = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
     private static final int SCREEN_HEIGHT = (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight();
     private int buttonWIDTH = 273, buttonHEIGHT = 108;
+    private boolean INGAME;
     private static JFrame f;
     private JPanel topPanel;
     private JButton pauseButton;
@@ -28,6 +29,7 @@ public class Game implements ActionListener, KeyListener {
     }
 
     private void initGame() throws IOException {
+        INGAME = false;
         try {
             clip = AudioSystem.getClip();
             clip.open(AudioSystem.getAudioInputStream(new File(getClass().getResource("resources/bgm.wav").getPath())));
@@ -91,10 +93,10 @@ public class Game implements ActionListener, KeyListener {
         pauseButton.setAlignmentX(0.5f); // center horizontally on-screen
         pauseButton.setAlignmentY(0.5f); // center vertically on-screen
         pauseButton.addActionListener(this);
+        pauseButton.setVisible(false);
         topPanel.add(pauseButton);
 
         // Must add last to ensure button's visibility
-        board = new Board(SCREEN_WIDTH, SCREEN_HEIGHT);
         menu = new Menu (true);
         story = new Story();
 
@@ -106,38 +108,49 @@ public class Game implements ActionListener, KeyListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        topPanel.remove(startGame);
-        topPanel.remove(menu);
-        topPanel.add(story);
-        topPanel.revalidate();
+        if (e.getSource() == startGame) {
+            topPanel.remove(startGame);
+            topPanel.remove(menu);
+            topPanel.add(story);
+            topPanel.revalidate();
+        } else if (e.getSource() == pauseButton) {
+            if (!board.timer.isRunning()) {
+                timer.stop();
+                board.timer.start();
+                pauseButton.setVisible(false);
+            }
+        }
     }
 
     @Override
     public void keyTyped(KeyEvent e) {}
     @Override
     public void keyPressed(KeyEvent e) {
-        board.keyPressed(e);
+        if (INGAME)
+            board.keyPressed(e);
     }
     @Override
     public void keyReleased(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-            if (board.timer.isRunning())
+            if (board.timer.isRunning()) {
                 board.timer.stop();
-            else
+                timer.start();
+                pauseButton.setVisible(true);
+            } else {
+                timer.stop();
                 board.timer.start();
-        } else {
+                pauseButton.setVisible(false);
+            }
+        } else if (INGAME) {
             board.keyReleased(e);
-            int keyCode = e.getKeyCode();
-
-            board.keyReleased(e);
+        } else if (!INGAME) {
             story.keyReleased(e);
-
-            switch (keyCode) {
-                case KeyEvent.VK_SPACE:
-                    topPanel.remove(story);
-                    topPanel.add(board);
-                    topPanel.revalidate();
-                    break;
+            if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+                topPanel.remove(story);
+                board = new Board(SCREEN_WIDTH, SCREEN_HEIGHT);
+                topPanel.add(board);
+                topPanel.revalidate();
+                INGAME = true;
             }
         }
     }
