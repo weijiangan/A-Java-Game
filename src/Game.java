@@ -12,7 +12,7 @@ import java.io.IOException;
 public class Game implements ActionListener, KeyListener {
     private static final int SCREEN_WIDTH = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
     private static final int SCREEN_HEIGHT = (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight();
-    private int buttonWIDTH = 273, buttonHEIGHT = 108;
+    private static final int START_BUTTON_W = 273, START_BUTTON_H = 108;
     private boolean INGAME;
     private static JFrame f;
     private JPanel topPanel;
@@ -34,25 +34,24 @@ public class Game implements ActionListener, KeyListener {
             clip = AudioSystem.getClip();
             clip.open(AudioSystem.getAudioInputStream(new File(getClass().getResource("resources/bgm.wav").getPath())));
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(null, "Exception occurred: " + e, "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Failed to load background music: " + e, "Error", JOptionPane.ERROR_MESSAGE);
         }
-        clip.loop(Clip.LOOP_CONTINUOUSLY);
-        clip.start();
         f = new JFrame("A Java Game");
         f.setMinimumSize(new Dimension(SCREEN_WIDTH / 4, SCREEN_HEIGHT / 4));
         f.setExtendedState(JFrame.MAXIMIZED_BOTH);
         f.setResizable(true);
-        f.setContentPane(createContentPane());
         f.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         f.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 super.windowClosing(e);
-                board.timer.stop();
+                if (board != null && board.timer.isRunning())
+                    board.timer.stop();
                 if (JOptionPane.showConfirmDialog(null, "Are you sure you want to exit game?", "Notice",
                         JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                     System.exit(0);
                 }
+                if (board != null && !board.timer.isRunning())
                 board.timer.start();
             }
         });
@@ -65,6 +64,9 @@ public class Game implements ActionListener, KeyListener {
                 topPanel.repaint();
             }
         });
+        f.setContentPane(createContentPane());
+        clip.loop(Clip.LOOP_CONTINUOUSLY);
+        clip.start();
     }
 
     private JPanel createContentPane() throws IOException {
@@ -78,7 +80,7 @@ public class Game implements ActionListener, KeyListener {
         //start button
         startGame = new JButton("Start Game");
         startGame.setOpaque(false);
-        startGame.setPreferredSize(new Dimension(buttonWIDTH, buttonHEIGHT));
+        startGame.setMinimumSize(new Dimension(START_BUTTON_W, START_BUTTON_H));
         startGame.setContentAreaFilled(false);
         startGame.setBorderPainted(false);
         startGame.setFocusable(false); // rather than just setFocusable(false)
@@ -98,7 +100,7 @@ public class Game implements ActionListener, KeyListener {
 
         // Must add last to ensure button's visibility
         menu = new Menu (true);
-        story = new Story();
+        story = new Story(SCREEN_WIDTH, SCREEN_HEIGHT);
 
         topPanel.add(startGame);
         topPanel.add(menu);
@@ -156,7 +158,7 @@ public class Game implements ActionListener, KeyListener {
             if (e.getKeyCode() == KeyEvent.VK_SPACE) {
                 topPanel.remove(story);
                 try {
-                    board = new Board(SCREEN_WIDTH, SCREEN_HEIGHT);
+                    board = new Board();
                 } catch (Exception e1) {
                     e1.printStackTrace();
                 }

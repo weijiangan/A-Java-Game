@@ -11,93 +11,57 @@ import java.io.IOException;
  * Created by Sam on 12/5/16.
  */
 public class Story extends JPanel implements KeyListener {
-    private static final int WIDTH = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
-    private static final int HEIGHT = (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight();
+    private static int WIDTH;
+    private static int HEIGHT;
     private int counter = 0;
 
-    private JPanel screen = new JPanel();
+    private Image[] scenes = new Image[] {
+            new ImageIcon(this.getClass().getResource("resources/Story/0.jpg")).getImage(),
+            new ImageIcon(this.getClass().getResource("resources/Story/1.jpg")).getImage(),
+            new ImageIcon(this.getClass().getResource("resources/Story/2.jpg")).getImage(),
+            new ImageIcon(this.getClass().getResource("resources/Story/3.jpg")).getImage(),
+            new ImageIcon(this.getClass().getResource("resources/Story/4.jpg")).getImage(),
+            new ImageIcon(this.getClass().getResource("resources/Story/5.jpg")).getImage(),
+    };
 
-    final BufferedImage one = ImageIO.read (new File(getClass().getResource("resources/Story/1.jpg").getPath()));
-    final BufferedImage two = ImageIO.read (new File(getClass().getResource("resources/Story/2.jpg").getPath()));
-    final BufferedImage three = ImageIO.read (new File(getClass().getResource("resources/Story/3.jpg").getPath()));
-    final BufferedImage four = ImageIO.read (new File(getClass().getResource("resources/Story/4.jpg").getPath()));
-    final BufferedImage five = ImageIO.read (new File(getClass().getResource("resources/Story/5.jpg").getPath()));
-    final BufferedImage six = ImageIO.read (new File(getClass().getResource("resources/Story/6.jpg").getPath()));
-    final BufferedImage black = ImageIO.read (new File(getClass().getResource("resources/Story/Game.jpg").getPath()));
-
-    public Story() throws IOException {
-        screen.addKeyListener(this);
-        screen.repaint();
+    public Story(int w, int h) {
+        WIDTH = w;
+        HEIGHT = h;
+        setDoubleBuffered(true);
+        addKeyListener(this);
     }
 
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-        switch (counter) {
-            case 0:
-                g.drawImage(one, 0, 0, WIDTH, HEIGHT, null);
-                break;
-
-            case 1:
-                g.drawImage(two, 0, 0, WIDTH, HEIGHT, null);
-                break;
-
-            case 2:
-                g.drawImage(three, 0, 0, WIDTH, HEIGHT, null);
-                break;
-
-            case 3:
-                g.drawImage(four, 0, 0, WIDTH, HEIGHT, null);
-                break;
-
-            case 4:
-                g.drawImage(five, 0, 0, WIDTH, HEIGHT, null);
-                break;
-
-            case 5:
-                g.drawImage(six, 0, 0, WIDTH, HEIGHT, null);
-                break;
-
-            case 6:
-                g.drawImage(black, 0, 0, WIDTH, HEIGHT, null);
+        if (counter != scenes.length)
+            g.drawImage(scenes[counter], 0, 0, WIDTH, HEIGHT, null);
+        else {
+            g.setColor(Color.BLACK);
+            g.fillRect(0, 0, WIDTH, HEIGHT);
         }
-
-        repaint();
-    }
-
-    @Override
-    public void keyTyped(KeyEvent e) {
-
-    }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
-        int keyCode = e.getKeyCode();
-
-        switch (keyCode) {
+        switch (e.getKeyCode()) {
             case KeyEvent.VK_RIGHT:
-                if (counter < 6) {
-                    counter++;
-                }
+                if (counter < 6) counter++;
                 break;
 
             case KeyEvent.VK_LEFT:
-                if (counter > 0) {
-                    counter--;
-                }
+                if (counter > 0) counter--;
                 break;
 
             case KeyEvent.VK_SPACE:
                 break;
         }
+        repaint();
     }
 
-    public int startGame () {
-        return 10;
-    }
+    @Override
+    public void keyTyped(KeyEvent e) {}
+
+    @Override
+    public void keyPressed(KeyEvent e) {}
 }

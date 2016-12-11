@@ -11,19 +11,15 @@ import java.io.IOException;
  * Created by weijiangan on 02/12/2016.
  */
 
-public class Player {
-    private final int FRAMES = 11;
-    private int x, y;
+public class Player extends Character {
     private int dx;
     private int velocity;
-    private int curFrame;
     private int lives;
     private int invulnDur;
     private boolean JUMPING;
     private boolean PEAKED;
     private boolean GODMODE;
     private int LAND_Y;
-    private Image[] sprite = new Image[FRAMES];
     private Image jumpSprite;
     private Clip clip;
 
@@ -32,9 +28,11 @@ public class Player {
     }
 
     public Player(int x, int y) throws Exception {
+        FRAMES = 11;
         lives = 3;
         this.x = x;
         this.y = y;
+        sprite = new Image[FRAMES];
         for (int i = 0; i < FRAMES; i++) {
             sprite[i] = new ImageIcon(this.getClass().getResource("resources/Player/p3_walk/PNG/p3_walk" + String.format("%02d", i+1) + ".png")).getImage();
         }
@@ -46,22 +44,6 @@ public class Player {
         GODMODE = false;
         invulnDur = 0;
         velocity = 40;
-    }
-
-    public int getX() {
-        return x;
-    }
-
-    public void setX(int x) {
-        this.x = x;
-    }
-
-    public int getY() {
-        return y;
-    }
-
-    public void setY(int y) {
-        this.y = y;
     }
 
     public void setDx(int dx) {
@@ -96,7 +78,10 @@ public class Player {
     public void updatePos() {
         x += dx;
         if (JUMPING && !PEAKED) {
-
+            if (y == LAND_Y) {
+                clip.start();
+                clip.setFramePosition(0);
+            }
             if (velocity > 0) {
                 y -= velocity;
                 velocity *= 0.8;
@@ -127,6 +112,8 @@ public class Player {
             GODMODE = false;
     }
 
+    public boolean isGODMODE() { return GODMODE; }
+
     public int getInvulnDur() {
         return invulnDur;
     }
@@ -140,30 +127,7 @@ public class Player {
         if (b) {
             if (!JUMPING && !PEAKED)
                 LAND_Y = y;
-
             JUMPING = true;
-            clip.start();
-            clip.setMicrosecondPosition(0);
-        }
-        else JUMPING = false;
-    }
-
-    public void nextFrame() {
-        if (curFrame == (FRAMES-1))
-            curFrame = 0;
-        else
-            curFrame++;
-    }
-
-    public Rectangle getBounds() {
-        return (new Rectangle(x, y, sprite[curFrame].getWidth(null), sprite[curFrame].getHeight(null)));
-    }
-
-    public BufferedImage getBI() {
-        BufferedImage bi = new BufferedImage(sprite[curFrame].getWidth(null), sprite[curFrame].getHeight(null), BufferedImage.TYPE_INT_ARGB);
-        Graphics g = bi.getGraphics();
-        g.drawImage(sprite[curFrame], 0, 0, null);
-        g.dispose();
-        return bi;
+        } else JUMPING = false;
     }
 }

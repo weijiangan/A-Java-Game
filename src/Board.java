@@ -10,9 +10,9 @@ import java.util.Random;
  * Created by weijiangan on 28/11/2016.
  */
 public class Board extends JPanel implements ComponentListener {
-    private final int SPAWN_INTERVAL = 40;
-    private final int INVULN_DUR = 20;
     Timer timer;
+    private final int SPAWN_INTERVAL = 35;
+    private final int INVULN_DUR = 30;
     private boolean PLAYGAME;
     private int frameWidth, frameHeight;
     private int LAND_HEIGHT = (int) (0.8 * frameHeight);
@@ -20,7 +20,7 @@ public class Board extends JPanel implements ComponentListener {
     private int MOUNTAIN_HEIGHT = (int) (0.82 * frameWidth);
     private int MOON_X = (int) (0.8 * frameHeight);
     private int MOON_Y = (int) (0.12 * frameWidth);
-    private int PLAYER_X = (int) (0.15 * frameWidth);
+    private int PLAYER_X;
     private int PLAYER_Y;
     private int SNAIL_SPEED;
     private int NUM_OF_SNAILS;
@@ -35,20 +35,20 @@ public class Board extends JPanel implements ComponentListener {
     private ArrayList<Enemy> enemies;
     private Iterator<Enemy> iter;
 
-    public Board(int width, int height) throws Exception {
-        PLAYGAME = true;
-        setLayout(null);
-        this.frameWidth = width;
-        this.frameHeight = height;
-        scoreFont = new Font("Calibri", Font.BOLD, 56);
+    public Board() throws Exception {
+        addComponentListener(this);
+        setDoubleBuffered(true);
+        this.frameWidth = getWidth();
+        this.frameHeight = getHeight();
         score = 0;
+        random = new Random();
+        setLayout(null);
         scoreWidth = 0;
+        PLAYER_X = (int) (0.15 * frameWidth);
         SNAIL_SPEED = -7;
         NUM_OF_SNAILS = 5;
         enemies = new ArrayList<>();
-        addComponentListener(this);
-        setDoubleBuffered(true);
-        random = new Random();
+        scoreFont = new Font("Calibri", Font.BOLD, 56);
         cloud = new Terrain(-2, "resources/Tiles/Cloud_1.png");
         cloud.scaleSprite(0.2f);
         ground = new Terrain(-5, "resources/Tiles/grassMid.png");
@@ -57,7 +57,7 @@ public class Board extends JPanel implements ComponentListener {
         water2 = new Terrain(-15, "resources/Tiles/liquidWater.png");
         mountain = new Terrain(-1, "resources/Background/Mountains.png");
         player = new Player();
-        player.setX(30);
+        player.setX(PLAYER_X);
         timer = new Timer(25, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -93,6 +93,7 @@ public class Board extends JPanel implements ComponentListener {
             }
         });
         timer.start();
+        PLAYGAME = true;
     }
 
     @Override
@@ -110,22 +111,7 @@ public class Board extends JPanel implements ComponentListener {
             drawEnemies(g);
             drawHUD(g);
         } else {
-            g.setColor(Color.BLACK);
-            g.fillRect(0, 0, frameWidth, frameHeight);
-            Image gameOver = new ImageIcon(this.getClass().getResource("resources/Menu/gameOver.png")).getImage();
-            g.drawImage(gameOver, (frameWidth / 2) - (gameOver.getWidth(null) / 2), (frameHeight / 2) - (gameOver.getHeight(null) / 2), null);
-            Font largeScoreFont = new Font("Calibri", Font.BOLD, 100);
-            metric = g.getFontMetrics(scoreFont);
-            FontMetrics metric2 = g.getFontMetrics(scoreFont);
-            scoreWidth = metric2.stringWidth(String.format("%d", score));
-            String message1 = "You failed to escape the snails!";
-            String message2 = "Press space to restart";
-            g.setColor(Color.WHITE);
-            g.setFont(largeScoreFont);
-            g.drawString(String.format("%d", score), frameWidth/2-scoreWidth, 200);
-            g.setFont(scoreFont);
-            g.drawString(message1, frameWidth/2-metric.stringWidth(message1)/2, 100);
-            g.drawString(message2, frameWidth/2-metric.stringWidth(message2)/2, frameHeight - 100);
+            gameOver(g);
         }
     }
 
@@ -176,8 +162,9 @@ public class Board extends JPanel implements ComponentListener {
     }
 
     private void drawPlayer(Graphics g) {
-        if (player.getInvulnDur() % 2 == 0)
-            g.drawImage(player.getSprite(), player.getX(), player.getY(), this);
+        if (player.isGODMODE() && player.getInvulnDur() % 2 == 0)
+            return;
+        g.drawImage(player.getSprite(), player.getX(), player.getY(), this);
     }
 
     private void drawEnemies(Graphics g) {
@@ -207,6 +194,25 @@ public class Board extends JPanel implements ComponentListener {
             repaint();
         }
         //g.drawImage(cross, frameWidth - 75, 25, null);
+    }
+
+    private void gameOver(Graphics g) {
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, frameWidth, frameHeight);
+        Image gameOver = new ImageIcon(this.getClass().getResource("resources/Menu/gameOver.png")).getImage();
+        g.drawImage(gameOver, (frameWidth / 2) - (gameOver.getWidth(null) / 2), (frameHeight / 2) - (gameOver.getHeight(null) / 2), null);
+        Font largeScoreFont = new Font("Calibri", Font.BOLD, 100);
+        metric = g.getFontMetrics(scoreFont);
+        FontMetrics metric2 = g.getFontMetrics(scoreFont);
+        scoreWidth = metric2.stringWidth(String.format("%d", score));
+        String message1 = "You failed to escape the snails!";
+        String message2 = "Press space to restart";
+        g.setColor(Color.WHITE);
+        g.setFont(largeScoreFont);
+        g.drawString(String.format("%d", score), frameWidth/2-scoreWidth, 200);
+        g.setFont(scoreFont);
+        g.drawString(message1, frameWidth/2-metric.stringWidth(message1)/2, 100);
+        g.drawString(message2, frameWidth/2-metric.stringWidth(message2)/2, frameHeight - 100);
     }
 
     @Override
@@ -303,7 +309,8 @@ public class Board extends JPanel implements ComponentListener {
                 for(int j = firstJ; j < r.getHeight() + firstJ; j++) {
                     if((b1.getRGB(i, j) & 0xFF000000) != 0x00 && (b2.getRGB(i + bp1XHelper, j + bp1YHelper) & 0xFF000000) != 0x00) {
                         player.changeLives(-1);
-                        player.setInvulnDur(INVULN_DUR);
+                        if (!player.isGODMODE())
+                            player.setInvulnDur(INVULN_DUR);
                         break;
                     }
                 }
